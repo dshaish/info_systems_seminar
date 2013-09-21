@@ -17,6 +17,7 @@ FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
 SORT='sort=newest'  
 PAGE='page=0'
 PAGE_TEXT='page='
+IGNORE_STRING="Corrections:"
 KEY='api-key=ab3f971cf65466f158af0756aff34fe5:16:67528541'
 API_URL='http://api.nytimes.com/svc/search/v2/articlesearch.json?'
 
@@ -130,9 +131,12 @@ def fetch(file):
             title=article['headline']['main']  
             lead_p=article['lead_paragraph']
             news_desk=article['news_desk']
-            print(str(article_id) + ":   " + "TITLE:" + "\t" + title)
+            source=article['source']
+            
             'Write to CSV file'
-            csv_writer.writerow((article_id, date, article_url, re.sub(r'\,', '', title), news_desk))
+            if IGNORE_STRING in title: continue
+            print(str(article_id) + ":   " + "TITLE:" + "\t" + title)
+            csv_writer.writerow((article_id, date, article_url, re.sub(r'\,', '', title), news_desk, source))
             
             'Get the Article text from the URL address in HTML'
             article_file = open("NY_Times\\"+str(article_id),'w+', newline="\n")
