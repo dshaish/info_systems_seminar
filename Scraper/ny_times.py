@@ -1,45 +1,51 @@
 import os
 import json
-import urllib
+import urllib.request
 import csv
+import re
 import http.cookiejar
 from bs4 import BeautifulSoup
 
 '''
  * Default parameters for the module search queries
-'''
-API_URL='http://api.nytimes.com/svc/search/v1/article?format=json'
-QUERY='query=democrats' #+republicans'   
-FACETS='desk_facet=[POLITICS]%2Cnytd_section_facet=[POLITICS]'                         
-API_DATA='begin_date=20130101&end_date=20130408'   
-FIELDS='fields=body%2Curl%2Ctitle%2Cdate%2Cdes_facet%2Cdesk_facet%2Cnytd_section_facet%2Cbyline'
-OFFSET='offset=0'
+'''   
+QUERY_TERMS='q=Obama+AND+Syria'
+TIME_LIMIT='begin_date=20130901&end_date=20130921'
+ARCHIVE_FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
+FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
+SORT='sort=newest'  
+PAGE='page=0'
+PAGE_TEXT='page='
 KEY='api-key=ab3f971cf65466f158af0756aff34fe5:16:67528541'
+API_URL='http://api.nytimes.com/svc/search/v2/articlesearch.json?'
 
 '''
     * Get the number of offset/pages
 '''
-def get_number_of_offsets():
+def get_number_of_queries():
     
-    LINK=[API_URL, QUERY, API_DATA, FACETS, FIELDS, OFFSET, KEY]
+    ' Create HTML link address for query '
+    LINK=[API_URL, QUERY_TERMS, TIME_LIMIT, FIELDS, SORT, KEY]
     request_url='&'.join(LINK)
     print("Search Query URL for NY Times is  " + request_url)
 
     'Send URL request and convert response to JSON'
-    with urllib.request.urlopen(request_url) as url:
-        response = url.read()
+    url_resp=urllib.request.urlopen(request_url)
+    response = url_resp.read()
     json_response = json.loads(response.decode('utf-8'))
     
-    'Total number of search results'
-    num_items=json_response['total']
+    ' Get total number of search results'
+    num_items=json_response['response']['meta']['hits']
     print("Total number of search results: " + str(num_items))
+    print ("\n")
     
+    ' Get total number of page requests needed '
     range_size = (int(num_items/10))
     if ((num_items - range_size) > 0):
         range_size += 1        
     
-    'Override the number of articles fetching ' 
-    #seq=range(range_size)
+    'TEMP: Override the number of articles fetching '
+    # [DS]:   return ([range_size, num_items])
     return ([range(2), num_items])
 
 '''
@@ -47,30 +53,33 @@ def get_number_of_offsets():
 '''
 def prepare_csv_file(file, num_items):
     csv_writer = csv.writer(file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    csv_writer.writerow(("0", "NY TIMES Section"))
-    csv_writer.writerow(("0", "Total number of listings", num_items))
-    csv_writer.writerow(('ID', 'Date', 'URL','Title', 'Body', 'des_facet', 'desk_facet'))
+    csv_writer.writerow(("", "NY TIMES Section"))
+    csv_writer.writerow(("", "Total number of listings", num_items))
+    csv_writer.writerow(('ID', 'Date', 'URL','Title', 'News Desk', 'Source'))
     return csv_writer
 
-def get_HTML_article(article_file, url_opener, page_num, article_url):
+def get_HTML_article(url_opener, article_file, article_url):
+    
     'Get URL HTML'
-    html_url = article_url+"?pagewanted="+str(page_num)
-    print ("Getting HTML article from URL: " + html_url)
-    html_resp = url_opener.open(html_url)
+    print ("Getting HTML article from URL:   " + article_url)
+    html_response=url_opener.open(article_url)
     
     'Build HTML parser'     
-    soup = BeautifulSoup(html_resp)
+    soup = BeautifulSoup(html_response)
     
-    'Get all paragraphs'
+    'Get all paragraphs + clean redundant chars'
+    article_file.write("PARAGRAPH BODY:" + "\n")
     for paragraph in soup.findAll('p', attrs={"itemprop": "articleBody"}):
-        article_file.write(str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
-        article_file.write("\n")
+        stripped_p = re.sub('<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
+        stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
+        stripped_p = re.sub(r'\\n', '', stripped_p)
+        stripped_p = re.sub(r'\\x..', '', stripped_p)
+        article_file.write(stripped_p + "\n")
         
-    'Get next link'
-    for link in soup.findAll('a', attrs={"class": "next"}):
-        if (link.get('title') == 'Next Page'):
-            get_HTML_article(article_file, url_opener, (page_num+1), article_url)
-    
+    'Get next page - Currently disabled '
+    #for link in soup.findAll('a', attrs={"class": "next"}):
+    #    if (link.get('title') == 'Next Page'):
+    #        get_HTML_article(article_file, url_opener, (page_num+1), article_url)
     
 '''
  * Fetch the search results according to the search parameters.
@@ -84,8 +93,8 @@ def fetch(file):
     ''' 
      Returns the number of search queries we need to send - 
      each query is limited to 10 search results.'''
-    res = get_number_of_offsets()
-    seq = res[0]
+    res = get_number_of_queries()
+    offsets = res[0]
     num_items = res[1]
     
     ' Get the CSV file ready and write headline'
@@ -100,34 +109,43 @@ def fetch(file):
     '''
      * Crawl the data and dump into a CSV file
     '''
-    for i in seq:
+    for i in offsets:
         'Build New search string'
-        cur_offset=''.join(['offset=', str(i)])
-        cur_link=[API_URL, QUERY, API_DATA, FACETS, FIELDS, cur_offset, KEY]
+        cur_page=''.join([PAGE_TEXT, str(i)])
+        cur_link=[API_URL, QUERY_TERMS, TIME_LIMIT, SORT, ARCHIVE_FIELDS, cur_page, KEY]
         req_urls='&'.join(cur_link)
-        
+
         'Get search results JSON object'
         with urllib.request.urlopen(req_urls) as url:
             response = url.read()
         json_response = json.loads(response.decode('utf-8').strip('()'))
         
         'Iterate the results per article and print to file '
-        result = json_response['results']
-        article_id = 0
-        for ob in result:
-            date=ob['date']
-            article_url=ob['url']
-            title=ob['title']  
-            body=ob['body']
-            des_facet=ob['des_facet']
-            desk_facet=ob['desk_facet']
-            
+        result = json_response['response']['docs']
+        article_id = (i * 10)
+        for article in result:
+            date=article['pub_date']
+            article_url=article['web_url']
+            title=article['headline']['main']  
+            lead_p=article['lead_paragraph']
+            news_desk=article['news_desk']
+            print(str(article_id) + ":   " + "TITLE:" + "\t" + title)
             'Write to CSV file'
-            csv_writer.writerow((article_id, date, article_url, title, body, des_facet, desk_facet))
+            csv_writer.writerow((article_id, date, article_url, re.sub(r'\,', '', title), news_desk))
             
             'Get the Article text from the URL address in HTML'
-            article_file = open("NY_Times\\"+str(article_id),'w+', newline='')
-            get_HTML_article(article_file, url_opener, 1, article_url)
+            article_file = open("NY_Times\\"+str(article_id),'w+', newline="\n")
+            
+            'Write text file headline'
+            article_file.write("TITLE: " + title + "\n")
+            article_file.write("DATE: " + date + "\n")
+            str_lead_p = re.sub(r'(b\'|\\n\')', '', str(lead_p.encode(encoding='utf_8')))
+            article_file.write("LEAD PARAGRAPH: " + "\n" + str_lead_p + "\n\n")
+            
+            'Get the full HTML text'
+            get_HTML_article(url_opener, article_file, article_url)
+                
             article_file.close()
             article_id += 1
+            
     print ("***        NY Times Module: DONE       ***")
