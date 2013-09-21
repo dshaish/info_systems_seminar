@@ -9,7 +9,8 @@ from bs4 import BeautifulSoup
 '''
  * Default parameters for the module search queries
 '''   
-QUERY_TERMS='q=Obama+AND+Syria'
+#QUERY_SEARCH='q=Obama+Syria+-Corrections'
+QUERY_TERMS='&fq=body:("Obama")+AND+body:("Syria")'
 TIME_LIMIT='begin_date=20130901&end_date=20130921'
 ARCHIVE_FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
 FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
