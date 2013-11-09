@@ -9,8 +9,8 @@ from bs4 import BeautifulSoup
 '''
  * Default parameters for the module search queries
 '''   
-QUERY_TERMS='fq=body:("obama")+AND+body:("democrats")+AND+body:("republicans")+AND+body:("%22presidential%20elections%22")'
-TIME_LIMIT='&begin_date=20130101&end_date=20131101'
+QUERY_TERMS='fq=body:("obama")+AND+body:("democrats")+AND+body:("republicans")+AND+body:("elections")'
+TIME_LIMIT='&begin_date=20120601&end_date=20131115'
 FIELDS='&fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
 SORT='&sort=newest'  
 PAGE='&page=0'

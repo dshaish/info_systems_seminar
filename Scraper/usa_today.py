@@ -9,10 +9,10 @@ from bs4 import BeautifulSoup
 '''
  * Default parameters for the module search queries
 '''   
-QUERY_TERMS='&keyword=obama+AND+democrats+AND+republicans+AND+%22presidential%20elections%22'
-TIME_LIMIT='&days=365'
-COUNT_TIMES=100
-COUNT_LIMIT='&count=100'
+QUERY_TERMS='&keyword=obama+AND+democrats+AND+republicans+AND+elections'
+TIME_LIMIT='&todate=2012-11-15&days=250'
+COUNT_TIMES=50
+COUNT_LIMIT='&count=50'
 SORT='&most=commented'  
 NEWS_SECTION='&section=news' # or Washington
 KEY='&api_key=3s27rj4acsr38zqtrvn2zusc'
