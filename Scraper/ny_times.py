@@ -9,16 +9,14 @@ from bs4 import BeautifulSoup
 '''
  * Default parameters for the module search queries
 '''   
-#QUERY_SEARCH='q=Obama+Syria+-Corrections'
-QUERY_TERMS='&fq=body:("Obama")+AND+body:("Syria")'
-TIME_LIMIT='begin_date=20130901&end_date=20130921'
-ARCHIVE_FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
-FIELDS='fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
-SORT='sort=newest'  
-PAGE='page=0'
+QUERY_TERMS='fq=body:("obama")+AND+body:("democrats")+AND+body:("republicans")+AND+body:("%22presidential%20elections%22")'
+TIME_LIMIT='&begin_date=20130101&end_date=20131101'
+FIELDS='&fl=headline,lead_paragraph,web_url,pub_date,news_desk,source'
+SORT='&sort=newest'  
+PAGE='&page=0'
 PAGE_TEXT='page='
 IGNORE_STRING="Corrections:"
-KEY='api-key=ab3f971cf65466f158af0756aff34fe5:16:67528541'
+KEY='&api-key=ab3f971cf65466f158af0756aff34fe5:16:67528541'
 API_URL='http://api.nytimes.com/svc/search/v2/articlesearch.json?'
 
 '''
@@ -27,8 +25,7 @@ API_URL='http://api.nytimes.com/svc/search/v2/articlesearch.json?'
 def get_number_of_queries():
     
     ' Create HTML link address for query '
-    LINK=[API_URL, QUERY_TERMS, TIME_LIMIT, FIELDS, SORT, KEY]
-    request_url='&'.join(LINK)
+    request_url= API_URL + QUERY_TERMS + TIME_LIMIT + FIELDS + SORT + KEY
     print("Search Query URL for NY Times is  " + request_url)
 
     'Send URL request and convert response to JSON'
@@ -36,30 +33,35 @@ def get_number_of_queries():
     response = url_resp.read()
     json_response = json.loads(response.decode('utf-8'))
     
-    ' Get total number of search results'
+    'Get total number of search results'
     num_items=json_response['response']['meta']['hits']
     print("Total number of search results: " + str(num_items))
     print ("\n")
     
-    ' Get total number of page requests needed '
+    'Get total number of page requests needed '
     range_size = (int(num_items/10))
     if ((num_items - range_size) > 0):
         range_size += 1        
-    
-    'TEMP: Override the number of articles fetching '
-    # [DS]:   return ([range_size, num_items])
-    return ([range(2), num_items])
+
+    return ([range_size, num_items])
 
 '''
     * Prepare the CSV file and Headline 
 '''
 def prepare_csv_file(file, num_items):
     csv_writer = csv.writer(file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    csv_writer.writerow((""))
+    csv_writer.writerow((""))
+    csv_writer.writerow((""))
     csv_writer.writerow(("", "NY TIMES Section"))
     csv_writer.writerow(("", "Total number of listings", num_items))
     csv_writer.writerow(('ID', 'Date', 'URL','Title', 'News Desk', 'Source'))
     return csv_writer
 
+'''
+ * GET's the article from the search result link and extracts the article body.
+ * The article body is written to the article_file. 
+'''
 def get_HTML_article(url_opener, article_file, article_url):
     
     'Get URL HTML'
@@ -70,7 +72,7 @@ def get_HTML_article(url_opener, article_file, article_url):
     soup = BeautifulSoup(html_response)
     
     'Get all paragraphs + clean redundant chars'
-    article_file.write("PARAGRAPH BODY:" + "\n")
+    article_file.write("ARTICLE:" + "\n")
     for paragraph in soup.findAll('p', attrs={"itemprop": "articleBody"}):
         stripped_p = re.sub('<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
         stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
@@ -96,8 +98,8 @@ def fetch(file):
      Returns the number of search queries we need to send - 
      each query is limited to 10 search results.'''
     res = get_number_of_queries()
-    offsets = res[0]
-    num_items = res[1]
+    offsets=res[0]
+    num_items=res[1]
     
     ' Get the CSV file ready and write headline'
     csv_writer = prepare_csv_file(file, num_items)
@@ -113,44 +115,53 @@ def fetch(file):
     '''
     for i in offsets:
         'Build New search string'
-        cur_page=''.join([PAGE_TEXT, str(i)])
-        cur_link=[API_URL, QUERY_TERMS, TIME_LIMIT, SORT, ARCHIVE_FIELDS, cur_page, KEY]
-        req_urls='&'.join(cur_link)
-
+        cur_page= "&" + PAGE_TEXT + str(i)
+        #req_urls= API_URL + QUERY_TERMS + TIME_LIMIT + SORT + FIELDS + cur_page + KEY
+        req_url= API_URL + QUERY_TERMS + TIME_LIMIT + FIELDS + SORT + cur_page  + KEY
+        print("Getting first page with query: " + req_url)
+        
         'Get search results JSON object'
-        with urllib.request.urlopen(req_urls) as url:
+        with urllib.request.urlopen(req_url) as url:
             response = url.read()
         json_response = json.loads(response.decode('utf-8').strip('()'))
         
         'Iterate the results per article and print to file '
-        result = json_response['response']['docs']
+        num_result = json_response['response']['docs']
         article_id = (i * 10)
-        for article in result:
+        for article in num_result:
+            
+            'Extract csv file headers '
+            title=article['headline']['main']
             date=article['pub_date']
             article_url=article['web_url']
-            title=article['headline']['main']  
-            lead_p=article['lead_paragraph']
             news_desk=article['news_desk']
             source=article['source']
+            lead_p=article['lead_paragraph']
             
             'Write to CSV file'
             if IGNORE_STRING in title: continue
             print(str(article_id) + ":   " + "TITLE:" + "\t" + title)
             csv_writer.writerow((article_id, date, article_url, re.sub(r'\,', '', title), news_desk, source))
             
-            'Get the Article text from the URL address in HTML'
+            'Open File with article id as the name'
             article_file = open("NY_Times\\"+str(article_id),'w+', newline="\n")
             
             'Write text file headline'
             article_file.write("TITLE: " + title + "\n")
             article_file.write("DATE: " + date + "\n")
+            article_file.write("LINK:: " + article_url + "\n")
             str_lead_p = re.sub(r'(b\'|\\n\')', '', str(lead_p.encode(encoding='utf_8')))
             article_file.write("LEAD PARAGRAPH: " + "\n" + str_lead_p + "\n\n")
             
             'Get the full HTML text'
-            get_HTML_article(url_opener, article_file, article_url)
+            try:
+                get_HTML_article(url_opener, article_file, article_url)
+            except:
+                print("Failed to GET article !")
                 
             article_file.close()
             article_id += 1
             
     print ("***        NY Times Module: DONE       ***")
+    print ("")
+    print ("")
