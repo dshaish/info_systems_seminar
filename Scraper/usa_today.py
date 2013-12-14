@@ -94,26 +94,26 @@ def fetch(file):
     result = json_response['stories']
     article_id = 0
     for article in result:
-        'Extract csv file headers '
-        title= re.sub(r'\,', '', article['description'])
-        date= re.sub(r'\,', '', article['pubDate'])
-        article_url=article['link']
-        news_desk='news'
-            
-        'Write to CSV file'
-        print(str(article_id) + ":   " + "TITLE:" + "\t" + title)
-        csv_writer.writerow((article_id, date, article_url, title, news_desk, " "))
-        
-        'Open File with article id as the name'
-        article_file = open("USA_Today\\"+str(article_id),'w+', newline="\n")
-            
-        'Write text file headline'
-        article_file.write("TITLE: " + title + "\n")
-        article_file.write("DATE: " + date + "\n")
-        article_file.write("LINK: " + article_url + "\n")    
-        
-        'Get the full HTML text'
         try:
+            'Extract csv file headers '
+            title= re.sub(r'\,', '', article['description'])
+            date= re.sub(r'\,', '', article['pubDate'])
+            article_url=article['link']
+            news_desk='news'
+                
+            'Write to CSV file'
+            print(str(article_id) + ":   " + "TITLE:" + "\t" + title)
+            csv_writer.writerow((article_id, date, article_url, title, news_desk, " "))
+            
+            'Open File with article id as the name'
+            article_file = open("USA_Today\\"+str(article_id),'w+', newline="\n")
+                
+            'Write text file headline'
+            article_file.write("TITLE: " + title + "\n")
+            article_file.write("DATE: " + date + "\n")
+            article_file.write("LINK: " + article_url + "\n")    
+            
+            'Get the full HTML text'
             get_HTML_article(url_opener, article_file, article_url)
         except:
             print("Failed to GET article !")

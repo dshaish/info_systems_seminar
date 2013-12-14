@@ -79,7 +79,14 @@ def get_HTML_article(url_opener, article_file, article_url):
         stripped_p = re.sub(r'\\n', '', stripped_p)
         stripped_p = re.sub(r'\\x..', '', stripped_p)
         article_file.write(stripped_p + "\n")
-        
+    
+    article_body=soup.findAll('div', {'class':'entry-content'})
+    for paragraph in article_body:
+        stripped_p = re.sub('<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
+        stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
+        stripped_p = re.sub(r'\\n', '', stripped_p)
+        stripped_p = re.sub(r'\\x..', '', stripped_p)
+        article_file.write(stripped_p + "\n")    
     'Get next page - Currently disabled '
     #for link in soup.findAll('a', attrs={"class": "next"}):
     #    if (link.get('title') == 'Next Page'):
@@ -113,7 +120,8 @@ def fetch(file):
     '''
      * Crawl the data and dump into a CSV file
     '''
-    for i in offsets:
+    for i in range(offsets):
+        
         'Build New search string'
         cur_page= "&" + PAGE_TEXT + str(i)
         #req_urls= API_URL + QUERY_TERMS + TIME_LIMIT + SORT + FIELDS + cur_page + KEY
@@ -147,14 +155,27 @@ def fetch(file):
             article_file = open("NY_Times\\"+str(article_id),'w+', newline="\n")
             
             'Write text file headline'
-            article_file.write("TITLE: " + title + "\n")
-            article_file.write("DATE: " + date + "\n")
-            article_file.write("LINK:: " + article_url + "\n")
-            str_lead_p = re.sub(r'(b\'|\\n\')', '', str(lead_p.encode(encoding='utf_8')))
-            article_file.write("LEAD PARAGRAPH: " + "\n" + str_lead_p + "\n\n")
-            
-            'Get the full HTML text'
             try:
+                article_file.write("TITLE: " + title + "\n")
+            except:
+                print("Failed to GET Title !")
+            
+            try:    
+                article_file.write("DATE: " + date + "\n")
+            except:
+                print("Failed to GET Date !")
+            try:    
+                article_file.write("LINK:: " + article_url + "\n")
+            except:
+                print("Failed to GET Link !")
+            try:    
+                str_lead_p = re.sub(r'(b\'|\\n\')', '', str(lead_p.encode(encoding='utf_8')))
+                article_file.write("LEAD PARAGRAPH: " + "\n" + str_lead_p + "\n\n")
+            except:
+                print("Failed to GET Lead Paragraph !")
+                
+                'Get the full HTML text'
+            try:          
                 get_HTML_article(url_opener, article_file, article_url)
             except:
                 print("Failed to GET article !")
