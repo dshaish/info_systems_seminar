@@ -8,8 +8,9 @@ from pprint import pprint
 import Scraper
 
 REP_SUB_REDDIT={"Republican", "republicans", "ModerateRepublican"}
-DEM_SUB_REDDIT={"democrats"}
-SUPPORTED_NEWS_SITES=["nytimes.com", "usatoday.com"]
+DEM_SUB_REDDIT={"democrats", "obama"}
+SUB_REDDIT= set(list(DEM_SUB_REDDIT) + list(REP_SUB_REDDIT))
+SUPPORTED_NEWS_SITES=["nytimes.com", "usatoday.com","washingtonpost.com"]
 BAD_USERS=[""]
 VOTE_TRESHHOLD=0
 
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     url_opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
     
     'Iterate sub reddits :'
-    for sub_reddit in DEM_SUB_REDDIT:
+    for sub_reddit in SUB_REDDIT:
         
         ' Prepare the directory per sub_reddit'
         if not os.path.exists(str(sub_reddit)):
@@ -74,11 +75,11 @@ if __name__ == '__main__':
                           
                     ' Skip non supported sites'
                     if not (str(sub.domain) in SUPPORTED_NEWS_SITES): 
-                        print (str(counter) + ": NOT SUPPORTED: " + str(sub) + "(" + str(sub.domain) + ")" )
+                        print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ sub.title + "(" + str(sub.domain) + ")" )
                         continue
                     
                     ' Print to screen and to CSV the reults'
-                    print(str(counter) + ': FOUND: ' + str(sub) + "(" + str(sub.domain) + ")")
+                    print(str(counter) + ': FOUND' +'('+ str(article_id) +'): ' + str(sub) + "(" + str(sub.domain) + ")")
                     csv_writer.writerow((article_id, sub.id, sub.score, re.sub(r'\,', '', sub.title), sub.url, sub.permalink, sub.domain))
                     
                     'Open File with article id as the name'
@@ -90,8 +91,13 @@ if __name__ == '__main__':
                     article_file.write("\n")
                     
                     'Get the article content'
-                    Scraper.ny_times.get_HTML_article(url_opener, article_file, sub.url)
-                    
+                    if (sub.domain == SUPPORTED_NEWS_SITES[0]):
+                        Scraper.ny_times.get_HTML_article(url_opener, article_file, sub.url)
+                    elif (sub.domain == SUPPORTED_NEWS_SITES[1]):
+                        Scraper.usa_today.get_HTML_article(url_opener, article_file, sub.url)
+                    elif (sub.domain == SUPPORTED_NEWS_SITES[2]):
+                        Scraper.washington_post.get_HTML_article(url_opener, article_file, sub.url)
+                        
                     ' Set new place holder '
                     place_anchor = sub.id
                     
@@ -101,10 +107,13 @@ if __name__ == '__main__':
                     article_file.close()
                     'Limit the articles found'
                     if (article_id > ARTICLE_LIMIT) :
+                        place_anchor = 0
                         break
-                    
                 except:
-                    print("ERROR: Failed to get: " + pprint(sub))
-            
-        file.close()
-        print("Completed REDDIT mining successfully")
+                    try:
+                        print("ERROR: Failed to get: " + print(str(sub)))
+                    except:
+                        print("ERROR: Failed to get number: " + str(counter))
+
+    file.close()
+    print("Completed REDDIT mining successfully")
