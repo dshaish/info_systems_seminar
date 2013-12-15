@@ -1,5 +1,6 @@
 import ny_times
 import usa_today
+import washington_post
 
 '''
  * The Scraper Module
