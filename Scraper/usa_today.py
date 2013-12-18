@@ -44,17 +44,27 @@ def get_HTML_article(url_opener, article_file, article_url):
     
     'Build HTML parser'     
     soup = BeautifulSoup(html_response)
+    
+    'Get the Author'
+    article_author=soup.find('span', attrs={"itemprop": "name"}).contents
+    author_to_parse = article_author[0].split(",", 1)
+    author = re.sub(r'\\n', '', str(author_to_parse[0])).strip()
+    article_file.write("<author>" + author +'</author>\n\n')
+         
+    'Get The Article body'
     article_body=soup.find(attrs={"itemprop": "articleBody"})
     
     'Get all paragraphs + clean redundant chars'
-    article_file.write("ARTICLE:" + "\n")
+    article_file.write("<article>" + "\n")
     for paragraph in article_body.findAll('p'):
-        stripped_p = re.sub('<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
+        stripped_p = re.sub(r'<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
         stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
         stripped_p = re.sub(r'\\n', '', stripped_p)
         stripped_p = re.sub(r'\\x..', '', stripped_p)
         article_file.write(stripped_p + "\n")
         
+    article_file.write("</article>" + "\n")
+    
     'Get next page - Currently disabled '
     #for link in soup.findAll('a', attrs={"class": "next"}):
     #    if (link.get('title') == 'Next Page'):

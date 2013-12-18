@@ -84,11 +84,10 @@ if __name__ == '__main__':
                     
                     'Open File with article id as the name'
                     article_file = open(str(sub_reddit) + "\\" + str(article_id), 'w+', newline="\n")
-                    article_file.write("SUB-REDDIT:" + sub_reddit + "\n")
-                    article_file.write("NEWS PAPER:" + sub.domain + "\n")
+                    article_file.write("<sub-reddit>" + sub_reddit + "</sub-reddit>\n")
+                    article_file.write("<news-paper>" + sub.domain + "</news-paper>\n")
                     article_file.write("\n")
-                    article_file.write("TITLE:" + sub.title + "\n")
-                    article_file.write("\n")
+                    article_file.write("<title>" + sub.title + "</title>\n")
                     
                     'Get the article content'
                     if (sub.domain == SUPPORTED_NEWS_SITES[0]):
