@@ -19,6 +19,9 @@ VOTE_TRESHHOLD=0
 ' Limit of number of articles per news paper'
 ARTICLE_LIMIT = 2
 
+'Users to disregard'
+IGNORED_USERS={}
+
 '''
     * Prepare the CSV file and Headline 
 '''
@@ -66,7 +69,8 @@ if __name__ == '__main__':
                 submissions = r.get_subreddit(sub_reddit).get_hot(limit=None, 
                                                                       place_holder=place_anchor)
             else:
-                print("Getting new submissions - initial request")
+                print("\n\n************************************************************************")
+                print("Getting new submissions - initial request from : " + sub_reddit)
                 submissions = r.get_subreddit(sub_reddit).get_hot(limit=None)
                 
             ' Iterate the submissions '
@@ -77,7 +81,8 @@ if __name__ == '__main__':
                           
                     ' Skip non supported sites'
                     if not (str(sub.domain) in SUPPORTED_NEWS_SITES): 
-                        print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ sub.title + "(" + str(sub.domain) + ")" )
+                        '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ sub.title + "(" + str(sub.domain) + ")" )'''
+                        print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ str(sub.domain))
                         continue
                     
                     ' Print to screen and to CSV the reults'
