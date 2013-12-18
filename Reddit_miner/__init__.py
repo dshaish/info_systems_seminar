@@ -7,8 +7,10 @@ import urllib.request
 from pprint import pprint
 import Scraper
 
-REP_SUB_REDDIT={"Republican", "republicans", "ModerateRepublican"}
-DEM_SUB_REDDIT={"democrats", "obama"}
+
+REP_SUB_REDDIT={"republicans", "Republican", "Romney"}
+DEM_SUB_REDDIT={"democrats", "Democrat", "obama"}
+CENTER_SUB_REDDIT={"ModerateRepublican", "ModerateDemocrate"}
 SUB_REDDIT= set(list(DEM_SUB_REDDIT) + list(REP_SUB_REDDIT))
 SUPPORTED_NEWS_SITES=["nytimes.com", "usatoday.com","washingtonpost.com"]
 BAD_USERS=[""]
