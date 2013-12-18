@@ -55,7 +55,7 @@ def get_HTML_article(url_opener, article_file, article_url):
     article_body=soup.find(attrs={"itemprop": "articleBody"})
     
     'Get all paragraphs + clean redundant chars'
-    article_file.write("<article>" + "\n")
+    article_file.write("<content>" + "\n")
     for paragraph in article_body.findAll('p'):
         stripped_p = re.sub(r'<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
         stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
@@ -63,7 +63,7 @@ def get_HTML_article(url_opener, article_file, article_url):
         stripped_p = re.sub(r'\\x..', '', stripped_p)
         article_file.write(stripped_p + "\n")
         
-    article_file.write("</article>" + "\n")
+    article_file.write("</content>" + "\n")
     
     'Get next page - Currently disabled '
     #for link in soup.findAll('a', attrs={"class": "next"}):

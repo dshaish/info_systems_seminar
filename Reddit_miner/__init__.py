@@ -91,10 +91,14 @@ if __name__ == '__main__':
                     
                     'Open File with article id as the name'
                     article_file = open(str(sub_reddit) + "\\" + str(article_id), 'w+', newline="\n")
+                    article_file.write("<article>\n")
                     article_file.write("<sub-reddit>" + sub_reddit + "</sub-reddit>\n")
                     article_file.write("<news-paper>" + sub.domain + "</news-paper>\n")
                     article_file.write("\n")
-                    article_file.write("<title>" + sub.title + "</title>\n")
+                    stripped_title = re.sub(r'<[^<]+?>', '', str(str(sub.title).encode(encoding='utf_8', errors='ignore')))
+                    stripped_title = re.sub(r'(b\'|\\n\')', '', stripped_title)
+                    stripped_title = re.sub(r'\\x..', '', stripped_title)
+                    article_file.write("<title>" + stripped_title  + "</title>\n")
                     
                     'Get the article content'
                     if (sub.domain == SUPPORTED_NEWS_SITES[0]):
@@ -104,6 +108,9 @@ if __name__ == '__main__':
                     elif (sub.domain == SUPPORTED_NEWS_SITES[2]):
                         Scraper.washington_post.get_HTML_article(url_opener, article_file, sub.url)
                         
+                    'Close the XML file'
+                    article_file.write("</article>\n")
+                    
                     ' Set new place holder '
                     place_anchor = sub.id
                     

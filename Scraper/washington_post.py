@@ -22,7 +22,7 @@ def get_HTML_article(url_opener, article_file, article_url):
     article_body=soup.findAll('article')
     
     'Get all paragraphs + clean redundant chars'
-    article_file.write("<article>" + "\n")
+    article_file.write("<content>" + "\n")
     if (article_body is None):
         return
     
@@ -34,7 +34,7 @@ def get_HTML_article(url_opener, article_file, article_url):
             stripped_p = re.sub(r'\\x..', '', stripped_p)
             article_file.write(stripped_p + "\n")
     
-    article_file.write("</article>" + "\n")
+    article_file.write("</content>" + "\n")
     
     'Get next page - Currently disabled '
     #for link in soup.findAll('a', attrs={"class": "next"}):
