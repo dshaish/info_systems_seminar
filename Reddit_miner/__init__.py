@@ -37,7 +37,7 @@ def prepare_csv_file(file, section_name):
 if __name__ == '__main__':
     
     ' Create Filw for reddit data base '
-    target_file_name= "reddit.csv"
+    target_file_name="reddit.csv"
     file = open(target_file_name,'w+', newline="\n")
 
     ' PRAW library preparations'
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                     ' Skip non supported sites'
                     if not (str(sub.domain) in SUPPORTED_NEWS_SITES): 
                         '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ sub.title + "(" + str(sub.domain) + ")" )'''
-                        print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ str(sub.domain))
+                        '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ str(sub.domain))'''
                         continue
                     
                     ' Print to screen and to CSV the reults'
@@ -97,6 +97,7 @@ if __name__ == '__main__':
                     article_file.write("\n")
                     stripped_title = re.sub(r'<[^<]+?>', '', str(str(sub.title).encode(encoding='utf_8', errors='ignore')))
                     stripped_title = re.sub(r'(b\'|\\n\')', '', stripped_title)
+                    stripped_title = re.sub(r'\\n', '', stripped_title)
                     stripped_title = re.sub(r'\\x..', '', stripped_title)
                     article_file.write("<title>" + stripped_title  + "</title>\n")
                     
