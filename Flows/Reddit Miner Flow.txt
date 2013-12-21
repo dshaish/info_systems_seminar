@@ -1,0 +1,13 @@
+title Reddit Mining Flow
+
+Reddit Miner->Subreddit Module: Fetch Subreddit Database
+Subreddit Module->PRAW: Get subreddit Database
+PRAW->Reddit Server: Get all subreddit lists
+Reddit Server->PRAW: JSON Response
+PRAW->Subreddit Module: JSON Response
+Subreddit Module->Subreddit Module: Extract Valid newspapers
+Subreddit Module->Scraper Modules: Get Per Newspaper article
+Scraper Modules-> Newspapers Web Site: HTTP Article request
+Newspapers Web Site->Scraper Modules: HTML Article
+Scraper Modules->Scraper Modules: Extract Relevant Fields
+Scraper Modules-> DATABASE: Save Article in XML

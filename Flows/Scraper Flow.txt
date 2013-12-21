@@ -1,0 +1,11 @@
+title Scraper Flow
+
+Scraper->Scraper Query builder: Build query (Date/Keywords ...)
+Scraper Query builder->Scraper: Query 
+Scraper->News paper Web Service: Get Articles
+News paper Web Service->Scraper:JSON Response
+Scraper->Scraper Modules: Get Articles from Newspapers
+Scraper Modules->Newspapers Web Site: HTTP Article request
+Newspapers Web Site->Scraper Modules: HTML Article
+Scraper Modules->Scraper Modules: Extract Relevant Fields
+Scraper Modules-> DATABASE: Save Article in XML

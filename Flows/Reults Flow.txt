@@ -1,0 +1,11 @@
+title Results Flow
+
+Statistics Engine->DATABASE: Get Parsed Results
+DATABASE->Statistics Engine: Parsed Results
+Statistics Engine->Statistics Modules: Calculates statistics
+Statistics Modules->Statistics Modules: Calculate per feature statistics
+Statistics Modules->Statistics Engine: Results
+Excel GUI->Statistics Engine: Get Accumulated results
+Statistics Engine->Excel GUI: Accumulated results
+Excel GUI->Excel GUI: Load Results
+Excel GUI->Excel GUI: Create graph presentation

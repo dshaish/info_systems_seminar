@@ -1,0 +1,14 @@
+title Parsing flow
+
+DATABASE->NLTK:Articles in XML Form
+NLTK->NLTK Modules: Clean Text
+NLTK Modules->NLTK Modules: Stop Words cleaning
+NLTK Modules->NLTK Modules: POS tagging
+NLTK Modules->NLTK:Parsed Text
+NLTK->DATABASE: Parsed Text
+DATABASE->SVM Light: Parse Pext
+SVM Light->SVM Vector Calculator: Calculate Bias
+SVM Vector Calculator->SVM Vector Calculator: TF/IDF Calculate
+SVM Vector Calculator->SVM Vector Calculator: Subreddit locate
+SVM Vector Calculator->SVM Light: Return Bias
+SVM Light->DATABASE: Store results
