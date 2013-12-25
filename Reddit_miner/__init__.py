@@ -59,19 +59,22 @@ if __name__ == '__main__':
         article_id = 1
         place_anchor = 0
         counter = 0
+        last_first_in_sub = 0
+        kill_subreddit = False 
         
         ' Iterate over all the articles as long as the limit was not reached '
-        while (article_id <= ARTICLE_LIMIT):
+        while ((article_id <= ARTICLE_LIMIT) and not kill_subreddit):
         
             ' Get submissions for this sub-reddit from the last place holder: '
             if (place_anchor != 0 ):
                 print("Getting new submissions starting from: " + place_anchor)
                 submissions = r.get_subreddit(sub_reddit).get_hot(limit=None, 
-                                                                      place_holder=place_anchor)
+                                                                  place_holder=place_anchor)
             else:
                 print("\n\n************************************************************************")
                 print("Getting new submissions - initial request from : " + sub_reddit)
                 submissions = r.get_subreddit(sub_reddit).get_hot(limit=None)
+            new_submission = True
                 
             ' Iterate the submissions '
             for sub in submissions:
@@ -84,6 +87,17 @@ if __name__ == '__main__':
                         '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ sub.title + "(" + str(sub.domain) + ")" )'''
                         '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ str(sub.domain))'''
                         continue
+                    
+                    ' *** Handling Supported newspaper *** '
+                    
+                    ' Abort the retrieval process if we are lopping the same submissions '
+                    if (new_submission):
+                        new_submission = False
+                        if (last_first_in_sub == sub.id):
+                            print("Sub-Reddit completed - Aborting !")
+                            kill_subreddit = True
+                            break
+                        last_first_in_sub = sub.id
                     
                     ' Print to screen and to CSV the reults'
                     print(str(counter) + ': FOUND' +'('+ str(article_id) +'): ' + str(sub) + "(" + str(sub.domain) + ")")
