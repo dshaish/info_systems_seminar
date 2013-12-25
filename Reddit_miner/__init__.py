@@ -94,11 +94,8 @@ if __name__ == '__main__':
                     article_file.write("<article>\n")
                     article_file.write("<sub-reddit>" + sub_reddit + "</sub-reddit>\n")
                     article_file.write("<news-paper>" + sub.domain + "</news-paper>\n")
-                    article_file.write("\n")
-                    stripped_title = re.sub(r'<[^<]+?>', '', str(str(sub.title).encode(encoding='utf_8', errors='ignore')))
-                    stripped_title = re.sub(r'(b\'|\\n\')', '', stripped_title)
-                    stripped_title = re.sub(r'\\n', '', stripped_title)
-                    stripped_title = re.sub(r'\\x..', '', stripped_title)
+                    article_file.write("\n")         
+                    stripped_title = Scraper.string_cleaner(sub.title)
                     article_file.write("<title>" + stripped_title  + "</title>\n")
                     
                     'Get the article content'

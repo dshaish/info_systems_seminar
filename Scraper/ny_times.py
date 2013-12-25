@@ -5,6 +5,7 @@ import csv
 import re
 import http.cookiejar
 from bs4 import BeautifulSoup
+import Scraper
 
 '''
  * Default parameters for the module search queries
@@ -73,23 +74,19 @@ def get_HTML_article(url_opener, article_file, article_url):
     
     'Get the Author'
     article_author=soup.find('span', attrs={"itemprop": "name"}).contents
-    article_file.write("<author>" + str(article_author[0]) + '</author>\n\n')
+    author = str(article_author[0])
+    author_stripped = Scraper.string_cleaner(author)
+    article_file.write("<author>" + author_stripped + '</author>\n\n')
     
     'Get all paragraphs + clean redundant chars'
     article_file.write("<content>" + "\n")
     for paragraph in soup.findAll('p', attrs={"itemprop": "articleBody"}):
-        stripped_p = re.sub(r'<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
-        stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
-        stripped_p = re.sub(r'\\n', '', stripped_p)
-        stripped_p = re.sub(r'\\x..', '', stripped_p)
+        stripped_p = Scraper.string_cleaner(paragraph)
         article_file.write(stripped_p + "\n")
     
     article_body=soup.findAll('div', {'class':'entry-content'})
     for paragraph in article_body:
-        stripped_p = re.sub('<[^<]+?>', '', str(str(paragraph).encode(encoding='utf_8', errors='ignore')))
-        stripped_p = re.sub(r'(b\'|\\n\')', '', stripped_p)
-        stripped_p = re.sub(r'\\n', '', stripped_p)
-        stripped_p = re.sub(r'\\x..', '', stripped_p)
+        stripped_p = Scraper.string_cleaner(paragraph)
         article_file.write(stripped_p + "\n")    
     
     article_file.write("</content>" + "\n")

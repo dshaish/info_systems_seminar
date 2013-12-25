@@ -1,6 +1,15 @@
 import ny_times
 import usa_today
 import washington_post
+import re
+
+def string_cleaner(str_ing):
+    temp_string = str(str(str_ing).encode(encoding='utf_8', errors='ignore'))
+    temp_string = re.sub(r'<[^<]+?>', '', temp_string)
+    temp_string = re.sub(r'(b\'|\\n\')', '', temp_string)
+    temp_string = re.sub(r'\\n', '', temp_string)
+    temp_string = re.sub(r'\\x..', '', temp_string)
+    return temp_string
 
 '''
  * The Scraper Module
