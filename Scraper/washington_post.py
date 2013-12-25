@@ -15,9 +15,14 @@ def get_HTML_article(url_opener, article_file, article_url):
     soup = BeautifulSoup(html_response)
     
     'Get the Author'
-    article_author=soup.find('a', attrs={"rel": "author"}).contents
-    author = str(article_author[0])
-    author_stripped = Scraper.string_cleaner(author)
+    article_author_obj=soup.find('a', attrs={"rel": "author"})
+    if (article_author_obj != None):
+        article_author= article_author_obj.contents
+        author = str(article_author[0])
+        author_stripped = Scraper.string_cleaner(author)
+    else :
+        author_stripped = "Unknown"
+        
     article_file.write("<author>" + author_stripped  + '</author>\n\n')
     
     'Get the Author'
@@ -25,16 +30,18 @@ def get_HTML_article(url_opener, article_file, article_url):
     
     'Get all paragraphs + clean redundant chars'
     article_file.write("<content>" + "\n")
-    if (article_body is None):
-        return
     
-    for article in article_body:
-        for paragraph in article.findAll('p'):
-            stripped_p = Scraper.string_cleaner(paragraph)
-            article_file.write(stripped_p + "\n")
-    
+    try:
+        for article in article_body:
+            for paragraph in article.findAll('p'):
+                stripped_p = Scraper.string_cleaner(paragraph)
+                article_file.write(stripped_p + "\n")
+    except:
+        return False
+
     article_file.write("</content>" + "\n")
     
+    return True
     'Get next page - Currently disabled '
     #for link in soup.findAll('a', attrs={"class": "next"}):
     #    if (link.get('title') == 'Next Page'):

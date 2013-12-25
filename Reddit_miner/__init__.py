@@ -6,6 +6,7 @@ import http.cookiejar
 import urllib.request
 from pprint import pprint
 import Scraper
+import traceback
 
 
 REP_SUB_REDDIT={"republicans", "Republican", "Romney"}
@@ -16,8 +17,8 @@ SUPPORTED_NEWS_SITES=["nytimes.com", "usatoday.com","washingtonpost.com"]
 BAD_USERS=[""]
 VOTE_TRESHHOLD=0
 
-' Limit of number of articles per news paper'
-ARTICLE_LIMIT = 2
+' Limit of number of articles per newspaper'
+ARTICLE_LIMIT_NP = 1000
 
 'Users to disregard'
 IGNORED_USERS={}
@@ -41,9 +42,11 @@ if __name__ == '__main__':
     file = open(target_file_name,'w+', newline="\n")
 
     ' PRAW library preparations'
-    r = praw.Reddit(user_agent='iss_reddit_miner v0.1 /u/dshaish')
+    r = praw.Reddit(user_agent='iss_reddit_miner v0.2 /u/dshaish')
+    r.login("dshaish", "lc6tX23x")
     cj = http.cookiejar.CookieJar()
     url_opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    counter = 0
     
     'Iterate sub reddits :'
     for sub_reddit in SUB_REDDIT:
@@ -51,57 +54,32 @@ if __name__ == '__main__':
         ' Prepare the directory per sub_reddit'
         if not os.path.exists(str(sub_reddit)):
             os.makedirs(str(sub_reddit))
-            
+                
         ' Get the CSV file ready and write headline'
         csv_writer = prepare_csv_file(file, sub_reddit)
-    
+        
         ' Clear internal IDs '
         article_id = 1
-        place_anchor = 0
-        counter = 0
-        last_first_in_sub = 0
-        kill_subreddit = False 
+         
+        ' Iterate over all news supported newspapers '
+        for newspaper in SUPPORTED_NEWS_SITES:
+            
+            print (" ****** Getting Posts from: " + sub_reddit + " From Newspaper: " + newspaper + " ******")
+            
+            ' Clear newspaper limit '
+            newspaper_limit = 0
+            
+            'Query the data base ' 
+            query_string = str("site:" + newspaper)
+            submissions = r.search(query = query_string, subreddit = sub_reddit)
         
-        ' Iterate over all the articles as long as the limit was not reached '
-        while ((article_id <= ARTICLE_LIMIT) and not kill_subreddit):
-        
-            ' Get submissions for this sub-reddit from the last place holder: '
-            if (place_anchor != 0 ):
-                print("Getting new submissions starting from: " + place_anchor)
-                submissions = r.get_subreddit(sub_reddit).get_hot(limit=None, 
-                                                                  place_holder=place_anchor)
-            else:
-                print("\n\n************************************************************************")
-                print("Getting new submissions - initial request from : " + sub_reddit)
-                submissions = r.get_subreddit(sub_reddit).get_hot(limit=None)
-            new_submission = True
-                
             ' Iterate the submissions '
             for sub in submissions:
                 try:
-                    'Total units counter '
-                    counter += 1
-                          
-                    ' Skip non supported sites'
-                    if not (str(sub.domain) in SUPPORTED_NEWS_SITES): 
-                        '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ sub.title + "(" + str(sub.domain) + ")" )'''
-                        '''print (str(counter) + ": NOT SUPPORTED: " + str(sub.score) + ": "+ str(sub.domain))'''
+                    
+                    'Accept only posts with comments'                  
+                    if (sub.score < VOTE_TRESHHOLD):
                         continue
-                    
-                    ' *** Handling Supported newspaper *** '
-                    
-                    ' Abort the retrieval process if we are lopping the same submissions '
-                    if (new_submission):
-                        new_submission = False
-                        if (last_first_in_sub == sub.id):
-                            print("Sub-Reddit completed - Aborting !")
-                            kill_subreddit = True
-                            break
-                        last_first_in_sub = sub.id
-                    
-                    ' Print to screen and to CSV the reults'
-                    print(str(counter) + ': FOUND' +'('+ str(article_id) +'): ' + str(sub) + "(" + str(sub.domain) + ")")
-                    csv_writer.writerow((article_id, sub.id, sub.score, re.sub(r'\,', '', sub.title), sub.url, sub.permalink, sub.domain))
                     
                     'Open File with article id as the name'
                     article_file = open(str(sub_reddit) + "\\" + str(article_id), 'w+', newline="\n")
@@ -113,29 +91,40 @@ if __name__ == '__main__':
                     article_file.write("<title>" + stripped_title  + "</title>\n")
                     
                     'Get the article content'
-                    if (sub.domain == SUPPORTED_NEWS_SITES[0]):
-                        Scraper.ny_times.get_HTML_article(url_opener, article_file, sub.url)
-                    elif (sub.domain == SUPPORTED_NEWS_SITES[1]):
-                        Scraper.usa_today.get_HTML_article(url_opener, article_file, sub.url)
-                    elif (sub.domain == SUPPORTED_NEWS_SITES[2]):
-                        Scraper.washington_post.get_HTML_article(url_opener, article_file, sub.url)
-                        
+                    if (SUPPORTED_NEWS_SITES[0] in sub.domain):
+                        success = Scraper.ny_times.get_HTML_article(url_opener, article_file, sub.url)
+                    elif (SUPPORTED_NEWS_SITES[1] in sub.domain):
+                        success = Scraper.usa_today.get_HTML_article(url_opener, article_file, sub.url)
+                    elif (SUPPORTED_NEWS_SITES[2] in sub.domain):
+                        success = Scraper.washington_post.get_HTML_article(url_opener, article_file, sub.url)
+                    else:
+                        success = False 
                     'Close the XML file'
                     article_file.write("</article>\n")
                     
-                    ' Set new place holder '
-                    place_anchor = sub.id
-                    
                     'Found articles counter'
-                    article_id +=1
+                    if success :
+                        
+                        'Total units counter '
+                        counter += 1
                     
+                        ' Print to screen and to CSV the reults'
+                        print(str(counter) + ': FOUND' +'('+ str(article_id) +'): ' + str(sub) + "(" + str(sub.domain) + ")")
+                        csv_writer.writerow((article_id, sub.id, sub.score, re.sub(r'\,', '', sub.title), sub.url, sub.permalink, sub.domain))
+                    
+                        'increment counters'
+                        article_id +=1
+                        newspaper_limit += 1
+                        
+                    ' Close single article file'
                     article_file.close()
+                    
                     'Limit the articles found'
-                    if (article_id > ARTICLE_LIMIT) :
-                        place_anchor = 0
+                    if (newspaper_limit == ARTICLE_LIMIT_NP) :
                         break
                 except:
                     try:
+                        print(traceback.format_exc())
                         print("ERROR: Failed to get: " + print(str(sub)))
                     except:
                         print("ERROR: Failed to get number: " + str(counter))
